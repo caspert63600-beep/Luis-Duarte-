@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TempsTrack" />
+  <title>TempsTrack — Suivi des heures</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── VARIABLES & RESET ─────────────────────────────── */
+    :root {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #273347;
+      --border:    #334155;
+      --accent:    #38bdf8;
+      --accent2:   #818cf8;
+      --success:   #34d399;
+      --danger:    #f87171;
+      --warn:      #fbbf24;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.4);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    input, select, button, textarea { font-family: inherit; font-size: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── SCROLLBAR ─────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* ─── APP SHELL ─────────────────────────────────────── */
+    #app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── SCREENS ───────────────────────────────────────── */
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      animation: fadeUp .25s ease;
+    }
+    .screen.active { display: flex; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── LOGIN SCREEN ──────────────────────────────────── */
+    #screen-login {
+      justify-content: center;
+      align-items: center;
+      padding: 32px 24px;
+      background: radial-gradient(ellipse at 50% 0%, #1e3a5f 0%, var(--bg) 70%);
+      min-height: 100dvh;
+    }
+    .login-logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+    .login-title {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -.5px;
+      margin-bottom: 6px;
+    }
+    .login-sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .login-box {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .login-box label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    /* ─── FORM ELEMENTS ─────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="date"],
+    input[type="number"],
+    select {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    /* ─── BUTTONS ───────────────────────────────────────── */
+    .btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(.97); opacity: .85; }
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-success {
+      background: var(--success);
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1.5px solid var(--danger);
+    }
+    .btn-warn {
+      background: var(--warn);
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .btn-full { width: 100%; }
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+    .btn-icon {
+      width: 38px; height: 38px;
+      padding: 0;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+    }
+
+    /* ─── TOP BAR ───────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -.3px;
+    }
+    .topbar-logo { font-size: 13px; color: var(--accent); font-weight: 600; font-family: 'DM Mono', monospace; }
+
+    /* ─── BOTTOM NAV ────────────────────────────────────── */
+    .bottomnav {
+      display: flex;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 4px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+      border: none;
+      background: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: color .15s;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-item svg { transition: transform .15s; }
+    .nav-item.active svg { transform: scale(1.1); }
+    .nav-icon { font-size: 22px; line-height: 1; }
+
+    /* ─── CONTENT AREA ──────────────────────────────────── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-bottom: 24px;
+    }
+
+    /* ─── CARDS ─────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .card-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ─── STAT STRIP ─────────────────────────────────────── */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+    }
+    .stat-label { font-size: 11px; color: var(--muted); }
+
+    /* ─── EMPLOYEE LIST ──────────────────────────────────── */
+    .emp-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color .15s;
+    }
+    .emp-item:active { border-color: var(--accent); }
+    .emp-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .emp-info { flex: 1; min-width: 0; }
+    .emp-name { font-weight: 500; font-size: 15px; }
+    .emp-role { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .emp-hours {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* ─── ENTRY LIST ─────────────────────────────────────── */
+    .entry-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .entry-info { flex: 1; min-width: 0; }
+    .entry-emp { font-weight: 500; font-size: 14px; }
+    .entry-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .entry-chantier {
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 9px;
+      color: var(--accent2);
+      margin-top: 5px;
+      display: inline-block;
+    }
+    .entry-hours {
+      font-family: 'DM Mono', monospace;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--success);
+      flex-shrink: 0;
+    }
+
+    /* ─── RECAP TABLE ────────────────────────────────────── */
+    .month-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+    }
+    .month-label { font-weight: 500; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead tr { border-bottom: 2px solid var(--border); }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    td { padding: 12px; }
+    .td-hours {
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .td-name { font-weight: 500; }
+    .row-total {
+      background: var(--surface2);
+      font-weight: 600;
+    }
+
+    /* ─── BADGE ──────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-accent { background: rgba(56,189,248,.15); color: var(--accent); }
+    .badge-success { background: rgba(52,211,153,.15); color: var(--success); }
+
+    /* ─── TOAST ──────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--success);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      z-index: 999;
+      max-width: 90vw;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─── DIVIDER ────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ─── EMPTY STATE ────────────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 10px; }
+    .empty-text { font-size: 14px; }
+
+    /* ─── MODAL ──────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 100;
+      align-items: flex-end;
+      animation: fadeIn .2s ease;
+    }
+    .modal-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      width: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 20px;
+      animation: slideUp .25s ease;
+      max-height: 90dvh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 0 auto 16px;
+    }
+    .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+
+    /* ─── USER CHIP ──────────────────────────────────────── */
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .user-chip-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    /* ─── COLORS FOR AVATARS ─────────────────────────────── */
+    .av-0 { background: rgba(56,189,248,.2); color: var(--accent); }
+    .av-1 { background: rgba(129,140,248,.2); color: var(--accent2); }
+    .av-2 { background: rgba(52,211,153,.2); color: var(--success); }
+    .av-3 { background: rgba(251,191,36,.2); color: var(--warn); }
+    .av-4 { background: rgba(248,113,113,.2); color: var(--danger); }
+
+    /* ─── SECTION HEADER ─────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  </style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN: LOGIN
+  ══════════════════════════════════════════════ -->
+
+  <div id="screen-login" class="screen active">
+    <div class="login-logo">⏱</div>
+    <div class="login-title">TempsTrack</div>
+    <div class="login-sub">Suivi des heures · Chantiers & Paie</div>
+    <div class="login-box">
+      <div class="field">
+        <label>Adresse e-mail</label>
+        <input type="email" id="login-email" placeholder="vous@exemple.fr" autocomplete="email" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">
+        <span>Se connecter</span> <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN: MAIN APP
+  ══════════════════════════════════════════════ -->
+
+  <div id="screen-app" class="screen">
+
+```
+<!-- Top Bar -->
+<div class="topbar">
+  <span class="topbar-logo">⏱ TempsTrack</span>
+  <div class="user-chip" onclick="doLogout()">
+    <div class="user-chip-dot"></div>
+    <span id="user-email-display">—</span>
+  </div>
+</div>
+
+<!-- Tab: Dashboard -->
+<div id="tab-dashboard" class="content tab-content">
+  <div class="stat-strip">
+    <div class="stat-item">
+      <div class="stat-value" id="dash-total-h">0</div>
+      <div class="stat-label">Heures ce mois</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="dash-emp-count">0</div>
+      <div class="stat-label">Salariés</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="dash-entry-count">0</div>
+      <div class="stat-label">Saisies</div>
+    </div>
+  </div>
+
+  <!-- Recent entries -->
+  <div class="section-header">
+    <span class="section-title">Dernières saisies</span>
+    <span class="badge badge-accent" id="dash-month-label">—</span>
+  </div>
+  <div id="dash-recent-list"></div>
+</div>
+
+<!-- Tab: Employees -->
+<div id="tab-employees" class="content tab-content" style="display:none">
+  <div class="section-header">
+    <span class="section-title">Salariés (<span id="emp-count">0</span>)</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-emp')">+ Ajouter</button>
+  </div>
+  <div id="emp-list"></div>
+</div>
+
+<!-- Tab: Add Entry -->
+<div id="tab-add" class="content tab-content" style="display:none">
+  <div class="card">
+    <div class="card-title">Saisir des heures</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="field">
+        <label>Salarié</label>
+        <select id="entry-emp">
+          <option value="">— Choisir un salarié —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="entry-date" />
+      </div>
+      <div class="field">
+        <label>Heures travaillées</label>
+        <input type="number" id="entry-hours" placeholder="8" min="0.5" max="24" step="0.5" />
+      </div>
+      <div class="field">
+        <label>Projet / Chantier</label>
+        <input type="text" id="entry-chantier" placeholder="ex: Rénovation Dupont, Chantier A…" />
+      </div>
+      <button class="btn btn-success btn-full" onclick="addEntry()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Recap -->
+<div id="tab-recap" class="content tab-content" style="display:none">
+  <div class="month-selector">
+    <button class="btn btn-icon" onclick="changeMonth(-1)">‹</button>
+    <span class="month-label" id="recap-month-label">—</span>
+    <button class="btn btn-icon" onclick="changeMonth(+1)">›</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Total par salarié</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Salarié</th>
+            <th>Poste</th>
+            <th style="text-align:right">Heures</th>
+          </tr>
+        </thead>
+        <tbody id="recap-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Détail des saisies</div>
+    <div id="recap-detail-list"></div>
+  </div>
+
+  <button class="btn btn-warn btn-full" onclick="exportCSV()">
+    ↓ Exporter CSV (Excel / Paie)
+  </button>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottomnav">
+  <button class="nav-item active" data-tab="dashboard" onclick="switchTab(this,'dashboard')">
+    <span class="nav-icon">🏠</span>Accueil
+  </button>
+  <button class="nav-item" data-tab="employees" onclick="switchTab(this,'employees')">
+    <span class="nav-icon">👥</span>Salariés
+  </button>
+  <button class="nav-item" data-tab="add" onclick="switchTab(this,'add')">
+    <span class="nav-icon">➕</span>Saisir
+  </button>
+  <button class="nav-item" data-tab="recap" onclick="switchTab(this,'recap')">
+    <span class="nav-icon">📊</span>Récap
+  </button>
+</nav>
+```
+
+  </div><!-- /screen-app -->
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════
+     MODAL: ADD EMPLOYEE
+══════════════════════════════════════════════ -->
+
+<div id="modal-add-emp" class="modal-overlay" onclick="closeModalOutside(event,'modal-add-emp')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nouveau salarié</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="field">
+        <label>Nom complet</label>
+        <input type="text" id="emp-name-input" placeholder="ex: Marie Martin" />
+      </div>
+      <div class="field">
+        <label>Poste / Métier</label>
+        <input type="text" id="emp-role-input" placeholder="ex: Maçon, Plombier…" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="addEmployee()">Ajouter</button>
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-add-emp')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   STATE — tout est persisté dans localStorage
+════════════════════════════════════════════════════ */
+let state = {
+  user: null,          // email connecté
+  employees: [],       // [{id, name, role}]
+  entries: [],         // [{id, empId, date, hours, chantier}]
+  recapMonth: null,    // "YYYY-MM"
+};
+
+// Couleurs avatar (round-robin)
+const AV_COLORS = ['av-0','av-1','av-2','av-3','av-4'];
+
+/* ────── PERSISTANCE ────── */
+function save() {
+  localStorage.setItem('tt_state', JSON.stringify(state));
+}
+function load() {
+  const raw = localStorage.getItem('tt_state');
+  if (raw) {
+    try { state = { ...state, ...JSON.parse(raw) }; } catch(e) {}
+  }
+  if (!state.recapMonth) {
+    state.recapMonth = currentYM();
+  }
+}
+
+/* ────── HELPERS ────── */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+function currentYM() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function ymToLabel(ym) {
+  if (!ym) return '—';
+  const [y, m] = ym.split('-');
+  const months = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  return `${months[+m-1]} ${y}`;
+}
+function initials(name) {
+  return name.split(' ').map(p=>p[0]?.toUpperCase()||'').slice(0,2).join('');
+}
+function getEmployee(id) {
+  return state.employees.find(e=>e.id===id);
+}
+function avClass(idx) { return AV_COLORS[idx % AV_COLORS.length]; }
+
+function toast(msg, color='var(--success)') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderLeftColor = color;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+/* ════════════════════════════════════════════════════
+   AUTH
+════════════════════════════════════════════════════ */
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email || !email.includes('@')) {
+    toast('⚠ Entrez une adresse e-mail valide.', 'var(--danger)'); return;
+  }
+  state.user = email;
+  save();
+  showApp();
+}
+function doLogout() {
+  if (!confirm('Se déconnecter ?')) return;
+  state.user = null;
+  save();
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+}
+function showApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('user-email-display').textContent =
+    state.user.length > 18 ? state.user.slice(0,16)+'…' : state.user;
+  renderDashboard();
+  renderEmployees();
+  renderRecap();
+  populateEmpSelect();
+  setDefaultDate();
+}
+
+/* ════════════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════════════ */
+function switchTab(btn, tab) {
+  // nav highlight
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // show/hide tabs
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+  document.getElementById('tab-'+tab).style.display='flex';
+  // refresh data
+  if (tab==='dashboard') renderDashboard();
+  if (tab==='employees') renderEmployees();
+  if (tab==='recap')     renderRecap();
+  if (tab==='add')       { populateEmpSelect(); setDefaultDate(); }
+}
+
+/* ════════════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeModalOutside(e, id) {
+  if (e.target === e.currentTarget) closeModal(id);
+}
+
+/* ════════════════════════════════════════════════════
+   EMPLOYEES
+════════════════════════════════════════════════════ */
+function addEmployee() {
+  const name = document.getElementById('emp-name-input').value.trim();
+  const role = document.getElementById('emp-role-input').value.trim();
+  if (!name) { toast('⚠ Nom requis.', 'var(--danger)'); return; }
+  state.employees.push({ id: uid(), name, role: role||'—' });
+  save();
+  document.getElementById('emp-name-input').value = '';
+  document.getElementById('emp-role-input').value = '';
+  closeModal('modal-add-emp');
+  renderEmployees();
+  populateEmpSelect();
+  toast('✓ Salarié ajouté !');
+}
+
+function deleteEmployee(id) {
+  const emp = getEmployee(id);
+  if (!emp) return;
+  if (!confirm(`Supprimer ${emp.name} ? Ses saisies seront aussi effacées.`)) return;
+  state.employees = state.employees.filter(e=>e.id!==id);
+  state.entries   = state.entries.filter(e=>e.empId!==id);
+  save();
+  renderEmployees();
+  populateEmpSelect();
+  renderDashboard();
+  toast('Salarié supprimé.', 'var(--danger)');
+}
+
+function renderEmployees() {
+  const list = document.getElementById('emp-list');
+  document.getElementById('emp-count').textContent = state.employees.length;
+  if (!state.employees.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">Aucun salarié. Appuyez sur "+ Ajouter".</div></div>`;
+    return;
+  }
+  list.innerHTML = state.employees.map((emp, idx) => {
+    const total = state.entries.filter(e=>e.empId===emp.id).reduce((s,e)=>s+e.hours,0);
+    return `
+      <div class="emp-item" style="margin-bottom:10px">
+        <div class="emp-avatar ${avClass(idx)}">${initials(emp.name)}</div>
+        <div class="emp-info">
+          <div class="emp-name">${esc(emp.name)}</div>
+          <div class="emp-role">${esc(emp.role)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="emp-hours">${total}h</div>
+          <button class="btn btn-icon btn-sm" style="color:var(--danger);border-color:var(--danger)"
+            onclick="deleteEmployee('${emp.id}')">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════
+   ENTRIES
+════════════════════════════════════════════════════ */
+function setDefaultDate() {
+  const d = document.getElementById('entry-date');
+  if (!d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+function populateEmpSelect() {
+  const sel = document.getElementById('entry-emp');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Choisir un salarié —</option>' +
+    state.employees.map(e => `<option value="${e.id}" ${e.id===current?'selected':''}>${esc(e.name)}</option>`).join('');
+}
+
+function addEntry() {
+  const empId    = document.getElementById('entry-emp').value;
+  const date     = document.getElementById('entry-date').value;
+  const hours    = parseFloat(document.getElementById('entry-hours').value);
+  const chantier = document.getElementById('entry-chantier').value.trim();
+
+  if (!empId)       { toast('⚠ Choisissez un salarié.', 'var(--danger)'); return; }
+  if (!date)        { toast('⚠ Date requise.', 'var(--danger)'); return; }
+  if (!hours||hours<=0) { toast('⚠ Entrez un nombre d\'heures valide.', 'var(--danger)'); return; }
+
+  state.entries.push({ id: uid(), empId, date, hours, chantier: chantier||'' });
+  save();
+
+  // reset form (keep employee & chantier for quick re-entry)
+  document.getElementById('entry-hours').value = '';
+  toast('✓ Heures enregistrées !');
+  renderDashboard();
+  renderRecap();
+}
+
+/* ════════════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const ym = currentYM();
+  const monthEntries = state.entries.filter(e=>e.date.startsWith(ym));
+  const totalH = monthEntries.reduce((s,e)=>s+e.hours, 0);
+
+  document.getElementById('dash-total-h').textContent = totalH;
+  document.getElementById('dash-emp-count').textContent = state.employees.length;
+  document.getElementById('dash-entry-count').textContent = monthEntries.length;
+  document.getElementById('dash-month-label').textContent = ymToLabel(ym);
+
+  const list = document.getElementById('dash-recent-list');
+  const recent = [...state.entries].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+  if (!recent.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Aucune saisie pour l'instant.</div></div>`;
+    return;
+  }
+  list.innerHTML = recent.map(e => {
+    const emp = getEmployee(e.empId);
+    if (!emp) return '';
+    return entryHTML(e, emp);
+  }).join('');
+}
+
+function entryHTML(e, emp) {
+  return `
+    <div class="entry-item" style="margin-bottom:8px">
+      <div class="entry-info">
+        <div class="entry-emp">${esc(emp.name)}</div>
+        <div class="entry-meta">${formatDate(e.date)} · ${esc(emp.role)}</div>
+        ${e.chantier ? `<span class="entry-chantier">📍 ${esc(e.chantier)}</span>` : ''}
+      </div>
+      <div class="entry-hours">${e.hours}h</div>
+    </div>`;
+}
+
+function formatDate(ds) {
+  const [y,m,d] = ds.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* ════════════════════════════════════════════════════
+   RECAP
+════════════════════════════════════════════════════ */
+function changeMonth(delta) {
+  const [y,m] = state.recapMonth.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  state.recapMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  save();
+  renderRecap();
+}
+
+function renderRecap() {
+  const ym = state.recapMonth;
+  document.getElementById('recap-month-label').textContent = ymToLabel(ym);
+  const monthEntries = state.entries.filter(e=>e.date.startsWith(ym));
+
+  // Summary table
+  const tbody = document.getElementById('recap-tbody');
+  if (!state.employees.length) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px">Aucun salarié</td></tr>`;
+  } else {
+    let grandTotal = 0;
+    const rows = state.employees.map(emp => {
+      const h = monthEntries.filter(e=>e.empId===emp.id).reduce((s,e)=>s+e.hours,0);
+      grandTotal += h;
+      return `<tr>
+        <td class="td-name">${esc(emp.name)}</td>
+        <td style="color:var(--muted)">${esc(emp.role)}</td>
+        <td class="td-hours" style="text-align:right">${h}h</td>
+      </tr>`;
+    });
+    rows.push(`<tr class="row-total">
+      <td colspan="2" style="color:var(--muted)">TOTAL</td>
+      <td class="td-hours" style="text-align:right;font-size:15px">${grandTotal}h</td>
+    </tr>`);
+    tbody.innerHTML = rows.join('');
+  }
+
+  // Detail list
+  const detailEl = document.getElementById('recap-detail-list');
+  if (!monthEntries.length) {
+    detailEl.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Aucune saisie ce mois-ci.</div></div>`;
+    return;
+  }
+  const sorted = [...monthEntries].sort((a,b)=>b.date.localeCompare(a.date));
+  detailEl.innerHTML = sorted.map(e => {
+    const emp = getEmployee(e.empId);
+    if (!emp) return '';
+    return entryHTML(e, emp);
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════
+   CSV EXPORT
+════════════════════════════════════════════════════ */
+function exportCSV() {
+  const ym = state.recapMonth;
+  const entries = state.entries.filter(e=>e.date.startsWith(ym));
+  if (!entries.length) { toast('⚠ Aucune donnée à exporter.', 'var(--warn)'); return; }
+
+  const BOM = '\uFEFF'; // pour Excel (accents)
+  const header = ['Date','Salarié','Poste','Heures','Chantier'];
+  const rows = [...entries]
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .map(e => {
+      const emp = getEmployee(e.empId) || { name:'?', role:'?' };
+      return [formatDate(e.date), emp.name, emp.role, e.hours, e.chantier||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';');
+    });
+
+  const csv = BOM + [header.join(';'), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `heures_${ym}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✓ Export CSV téléchargé !');
+}
+
+/* ────── UTILS ────── */
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════ */
+(function init() {
+  load();
+  if (state.user) {
+    showApp();
+  }
+})();
+</script>
+
+</body>
+</html>
